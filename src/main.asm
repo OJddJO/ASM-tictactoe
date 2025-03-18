@@ -47,36 +47,3 @@ initBoard:
 
     .initBoardEnd:
         ret
-
-printBoard:
-    mov rdi, board
-    mov rcx, 3
-    .printBoardRow:
-        mov rsi, rdi
-        mov rdx, 3
-        call printRow
-        add rdi, 3
-        loop .printBoardRow
-    ret
-
-printRow:
-    mov rsi, verticalBar
-    call print
-    mov rsi, rdi
-    mov rcx, 3
-    .printRowLoop:
-        mov al, byte [rsi]
-        call printChar
-        inc rsi
-        loop .printRowLoop
-    mov rsi, verticalBar
-    call print
-    mov rsi, br
-    call print
-    ret
-
-printChar:
-    mov rax, 1
-    mov rdi, 1
-    syscall
-    ret
