@@ -6,7 +6,7 @@ strcmp:
     ;   rsi: pointer to the first string
     ;   rdi: pointer to the second string
     ; Returns:
-    ;   rax: 0 if the strings are equal, 1 if the first string is greater, -1 if the second string is greater
+    ;   rax: 0 if the strings are the same
     .strcmpLoop:
         mov al, byte [rsi]
         mov bl, byte [rdi]
@@ -17,9 +17,11 @@ strcmp:
         inc rsi
         inc rdi
         jmp .strcmpLoop
+
     .strcmpNeq:
-        mov rax, 1
-        ret
-    .strcmpEq:
         xor rax, rax
+        ret
+
+    .strcmpEq:
+        mov rax, 1
         ret
