@@ -3,10 +3,9 @@ section .bss
     boardSize equ $ - board
 
 section .data
-    br equ 0xa
-    verticalBar db '│', 0
-    horizontalBar db '─', 0
-    cross db '┼', 0
+    br equ 0xa ; do not use this to print a br use singleBr instead
+    singleBr db 0xa, 0
+    verticalBar db '|', 0
     empty db ' ', 0
     x db 'X', 0
     o db 'O', 0
@@ -22,6 +21,8 @@ section .data
     tie db 'Its a tie!', 0
     tieSize equ $ - tie
 
+    turn equ 49
+
 section .text
     extern exit
     extern print
@@ -31,6 +32,7 @@ section .text
 
 _start:
     call initBoard
+    mov rsi, board
     call printBoard
 
     call exit
@@ -41,9 +43,54 @@ initBoard:
     mov rcx, 9
 
     .initBoardLoop:
-        mov byte [rdi], 0 ; board[i] = 0
+        mov al, [empty]
+        mov byte [rdi], al ; board[i] = '0'
         inc rdi
         loop .initBoardLoop
 
-    .initBoardEnd:
-        ret
+    ret
+
+printVerticalBar:
+    push rsi
+    mov rsi, verticalBar
+    mov rdx, 1
+    call print
+    pop rsi
+    ret
+
+printBoardRow:
+    ; Args:
+    ;   rsi: pointer to the row to print
+    mov rcx, 3
+
+    .printLoop:
+        push rcx
+        call printVerticalBar
+        mov rdx, 1
+        call print
+        call printVerticalBar
+        inc rsi
+        pop rcx
+        loop .printLoop
+
+    ret
+
+printBoard:
+    ; Args:
+    ;   rsi: pointer to the board
+    mov rcx, 3
+
+    .printLoop:
+        push rcx
+        call printBoardRow
+        push rsi
+        mov rsi, singleBr
+        mov rdx, 1
+        call print
+        pop rsi
+        pop rcx
+        loop .printLoop
+
+    ret
+
+
