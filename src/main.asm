@@ -14,7 +14,7 @@ section .data
 
     playerPrompt db 'Player ', 0
     playerPromptSize equ $ - playerPrompt
-    movePrompt db ', enter your move: ', 0
+    movePrompt db ', enter your move (ex: a1): ', 0
     movePromptSize equ $ - movePrompt
     invalidMove db 'Invalid move!', br, 0
     invalidMoveSize equ $ - invalidMove
