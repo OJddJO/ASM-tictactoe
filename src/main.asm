@@ -14,7 +14,7 @@ section .data
 
     playerPrompt db 'Player ', 0
     playerPromptSize equ $ - playerPrompt
-    movePrompt db ', enter your move (ex: a1): ', 0
+    movePrompt db ', enter your move (ex: A1): ', 0
     movePromptSize equ $ - movePrompt
     invalidMove db 'Invalid move!', br, 0
     invalidMoveSize equ $ - invalidMove
@@ -23,8 +23,8 @@ section .data
     tie db 'Its a tie!', 0
     tieSize equ $ - tie
 
-    playerTurn db '1', 0
-    turn equ 0
+    playerTurn db 'X', 0
+    turn db 0
 
 section .text
     extern exit
@@ -41,16 +41,24 @@ _start:
         call printBoard ; print the board
         call promptUserTurn ; ask the user to input a move
         mov rsi, inputBuffer
-        mov rdx, inputBufferSize
-        call print
+        call getCoord
+
+        mov rsi, board
+        mov rdx, rax
+        call validMove
+
+        cmp rax, 1
+        je .validMove
+
+    .validMove:
+        call placeCross
+
+        mov rax, turn
+        inc byte [rax]
+        cmp byte [rax], 9
+        jl .gameloop
 
     call exit
-
-    .tie:
-        mov rsi, tie
-        mov rdx, tieSize
-        call print
-        call exit
 
 initBoard:
     ; initialize the baord
@@ -117,22 +125,20 @@ promptUserTurn:
     mov rdx, inputBufferSize
     call input
 
-    .evalInput:
-        ; evaluates the input from the user
-        ; input must be like a1
-        mov rsi, inputBuffer
-        mov al, byte [rsi]
-        cmp al, 'a' ; check if the first char is [a-c]
-        jl .invalidInput
-        cmp al, 'c'
-        jg .invalidInput
+    ; evaluates the input from the user
+    ; input must be like a1
+    mov al, byte [rsi]
+    cmp al, 'A' ; check if the first char is [A-C]
+    jl .invalidInput
+    cmp al, 'C'
+    jg .invalidInput
 
-        inc rsi
-        mov al, byte [rsi]
-        cmp al, '1'
-        jl .invalidInput
-        cmp al, '3'
-        jg .invalidInput
+    inc rsi
+    mov al, byte [rsi]
+    cmp al, '1'
+    jl .invalidInput
+    cmp al, '3'
+    jg .invalidInput
 
     ret
 
@@ -149,8 +155,53 @@ promptUserTurn:
         ret
 
     .invalidInput:
-        ; user input is invalid redo
+        ; user input is invalid -> redo
         mov rsi, invalidMove
         mov rdx, invalidMoveSize
         call print
         jmp promptUserTurn
+
+getCoord:
+    ; Args:
+    ;   rsi: pointer to the inputBuffer
+    ; Returns:
+    ;   rax: the index of the board
+    mov rax, 0
+    mov al, byte [rsi]
+    sub al, 'A'
+    mov bl, byte [rsi + 1]
+    sub bl, '1'
+    imul rax, 3
+    add al, bl
+    ret
+
+placeCross:
+    ; Args:
+    ;   rsi: pointer to the board
+    ;   rdx: the index of the board
+    mov al, [x]
+    mov byte [rsi + rdx], al
+    ret
+
+placeCircle:
+    ; Args:
+    ;   rsi: pointer to the board
+    ;   rdx: the index of the board
+    mov al, [o]
+    mov byte [rsi + rdx], al
+    ret
+
+validMove:
+    ; Args:
+    ;   rsi: pointer to the board
+    ;   rdx: the index of the board
+    ; Returns:
+    ;   rax: 1 if it is valid, 0 else
+    mov rax, 1
+    mov bl, byte [rsi + rdx]
+    cmp bl, [empty]
+    je .validMoveRet
+    mov rax, 0
+
+    .validMoveRet:
+        ret
