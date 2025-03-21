@@ -5,8 +5,6 @@ section .bss
     inputBufferSize equ $ - inputBuffer
 
 section .data
-    extern br ; (from io.asm)
-    extern singleBr ; (from io.asm)
     verticalBar db '|', 0
     empty db ' ', 0
     x db 'X', 0
@@ -18,7 +16,7 @@ section .data
     movePromptSize equ $ - movePrompt
     invalidMove db 'Invalid move!', br, 0
     invalidMoveSize equ $ - invalidMove
-    winPrompt db ' wins!', 0
+    winPrompt db ' wins!', br, 0
     winPromptSize equ $ - winPrompt
     tie db 'Its a tie!', 0
     tieSize equ $ - tie
@@ -27,38 +25,16 @@ section .data
     turn db 0
 
 section .text
+    ; import exit.asm
     extern exit
+    ; import io.asm
+    extern br
+    extern singleBr
     extern print
     extern input
-    extern strcmp
+    extern clearTerm
+
     global _start
-
-_start:
-    call initBoard
-
-    .gameloop:
-        mov rsi, board
-        call printBoard ; print the board
-        call promptUserTurn ; ask the user to input a move
-        mov rsi, inputBuffer
-        call getCoord
-
-        mov rsi, board
-        mov rdx, rax
-        call validMove
-
-        cmp rax, 1
-        je .validMove
-
-    .validMove:
-        call placeCross
-
-        mov rax, turn
-        inc byte [rax]
-        cmp byte [rax], 9
-        jl .gameloop
-
-    call exit
 
 initBoard:
     ; initialize the baord
@@ -74,6 +50,7 @@ initBoard:
     ret
 
 printVerticalBar:
+    ; Prints a vertical bar
     push rsi
     mov rsi, verticalBar
     mov rdx, 1
@@ -81,31 +58,14 @@ printVerticalBar:
     pop rsi
     ret
 
-printBoardRow:
-    ; Args:
-    ;   rsi: pointer to the row to print
-    mov rcx, 3
-
-    .printLoop:
-        push rcx
-        call printVerticalBar
-        mov rdx, 1
-        call print
-        call printVerticalBar
-        inc rsi
-        pop rcx
-        loop .printLoop
-
-    ret
-
 printBoard:
-    ; Args:
-    ;   rsi: pointer to the board
+    ; Prints the board
+    mov rsi, board
     mov rcx, 3
 
     .printLoop:
         push rcx
-        call printBoardRow
+        call .printBoardRow
         push rsi
         mov rsi, singleBr
         mov rdx, 1
@@ -116,7 +76,26 @@ printBoard:
 
     ret
 
+    .printBoardRow:
+        ; Prints a row of the board
+        ; Args:
+        ;   rsi: pointer to the row to print
+        mov rcx, 3
+
+        .printRowLoop:
+            push rcx
+            call printVerticalBar
+            mov rdx, 1
+            call print
+            call printVerticalBar
+            inc rsi
+            pop rcx
+            loop .printRowLoop
+
+        ret
+
 promptUserTurn:
+    ; Ask the user to enter coordinates
     ; Returns:
     ;   inputBuffer: the input of the user ex: a3
     call .printPrompt
@@ -162,10 +141,10 @@ promptUserTurn:
         jmp promptUserTurn
 
 getCoord:
-    ; Args:
-    ;   rsi: pointer to the inputBuffer
+    ; Get the index on the board based on the input
     ; Returns:
     ;   rax: the index of the board
+    mov rsi, inputBuffer
     mov rax, 0
     mov al, byte [rsi]
     sub al, 'A'
@@ -175,33 +154,218 @@ getCoord:
     add al, bl
     ret
 
-placeCross:
+placePlayer:
+    ; Place the symbol corresponding to the current player
     ; Args:
-    ;   rsi: pointer to the board
     ;   rdx: the index of the board
-    mov al, [x]
+    mov rsi, board
+    mov al, [playerTurn]
     mov byte [rsi + rdx], al
     ret
 
-placeCircle:
+isValidMove:
+    ; Checks if the square is empty
     ; Args:
-    ;   rsi: pointer to the board
-    ;   rdx: the index of the board
-    mov al, [o]
-    mov byte [rsi + rdx], al
-    ret
-
-validMove:
-    ; Args:
-    ;   rsi: pointer to the board
     ;   rdx: the index of the board
     ; Returns:
     ;   rax: 1 if it is valid, 0 else
+    mov rsi, board
     mov rax, 1
     mov bl, byte [rsi + rdx]
     cmp bl, [empty]
     je .validMoveRet
-    mov rax, 0
-
+        mov rax, 0
     .validMoveRet:
         ret
+
+changeCurrentTurn:
+    ; Change the player turn
+    mov rsi, playerTurn
+    mov al, 'X'
+    cmp al, [rsi]
+    je .isCross
+        mov byte [rsi], al ; if the current player isn't cross
+        ret
+
+    .isCross: ; if the current player is cross
+        mov al, 'O'
+        mov byte [rsi], al
+        ret
+
+checkWinner:
+    ; Check if there is a winner
+    xor rax, rax
+
+    mov r8b, 'X'
+    mov rdi, 0 ; check rows
+    call checkLines
+    cmp rax, 1
+    je printWin
+    mov rdi, 1 ; check cols
+    call checkLines
+    cmp rax, 1
+    je printWin
+    call checkDiags
+    cmp rax, 1
+    je printWin
+
+    mov r8b, 'O'
+    mov rdi, 0 ; check rows
+    call checkLines
+    cmp rax, 1
+    je printWin
+    mov rdi, 1 ; check cols
+    call checkLines
+    cmp rax, 1
+    je printWin
+    call checkDiags
+    cmp rax, 1
+    je printWin
+
+    ret
+
+checkLines:
+    ; Check if one of the lines is filled with a single symbol
+    ; Args:
+    ;   rdi: 0 if the lines to check are rows, 1 if cols
+    ;   r8b: the symbol to check
+    ; Returns:
+    ;   rax: 1 if one of the line is filled with a single symbol, 0 else
+    mov rcx, 3
+    mov rsi, 0
+    mov r9, 1
+    sub r9, rdi ; r9 = 0 if cols else r9 = 1
+    .checkLoop:
+        push rcx
+        call checkLine
+        cmp rax, 1
+        pop rcx
+        je .lineFilled
+        inc rsi ; rsi + 1
+        add rsi, r9
+        add rsi, r9
+        loop .checkLoop
+    mov rax, 0
+    ret
+
+    .lineFilled:
+        mov rax, 1
+        ret
+
+checkLine:
+    ; Check if the line is filled with a single symbol
+    ; Args:
+    ;   rsi: index of the line
+    ;   rdi: 0 if the lines to check are rows, 1 if cols
+    ;   r8b: the symbol to check
+    ; Returns:
+    ;   rax: 1 if the line is filled with a single symbol, 0 else
+    mov rdx, board
+    mov rcx, 3
+    .checkLoop:
+        cmp byte [rdx + rsi], r8b
+        jne .notSame
+            inc rdx ; if it is the same char as the previous one
+            add rdx, rdi
+            add rdx, rdi
+            loop .checkLoop
+
+    mov rax, 1 
+    ret
+
+    .notSame:
+        mov rax, 0
+        ret
+
+checkDiags:
+    ; Check if one of the two diagonals is filled with a single symbol
+    ; Args:
+    ;   r8b: the symbol to check
+    ; Returns:
+    ;   rax: 1 if one of the diagonal is filled, else 0
+
+    mov sil, r8b
+    mov rdi, 1
+    call print
+
+    mov rdx, board
+    mov rcx, 3
+    mov rsi, 0
+    .checkFirstDiagLoop:
+        cmp byte [rdx + rsi], r8b
+        jne .notFirstDiag
+            add rdx, 3
+            inc rsi
+            loop .checkFirstDiagLoop
+    mov rax, 1
+    ret
+
+    .notFirstDiag:
+        mov rdx, board
+        mov rcx, 3
+        mov rsi, 2
+        .checkSecondDiagLoop:
+            cmp byte [rdx + rsi], r8b
+            jne .noWinner
+                add rdx, 3
+                dec rsi
+                loop .checkSecondDiagLoop
+        mov rax, 1
+        ret
+
+    .noWinner:
+        mov rax, 0
+        ret
+
+printWin:
+    ; Print the winner and exit the program
+    ; Args:
+    ;   r8b: the symbol of the winner
+    mov rsi, playerPrompt
+    mov rdx, playerPromptSize
+    call print
+    mov byte [rsi], r8b 
+    mov rdx, 1
+    call print
+    mov rsi, winPrompt
+    mov rdx, winPromptSize
+    call print
+    call exit
+
+_start:
+    ; Entry Point
+    call initBoard
+
+    call clearTerm ; clear the terminal
+    .gameloop:
+        call printBoard ; print the board
+        call checkWinner
+
+    .playerInput:
+        call promptUserTurn ; ask the user to input a move
+        call getCoord
+
+        mov rdx, rax
+        call isValidMove
+        cmp rax, 1
+        je .validMove ; if it is valid continue
+            mov rsi, invalidMove ; else
+            mov rdx, invalidMoveSize
+            call print
+            jmp .playerInput
+
+        .validMove:
+            call placePlayer
+            call changeCurrentTurn
+            call clearTerm
+
+            mov rax, turn
+            inc byte [rax]
+            cmp byte [rax], 9
+            jl .gameloop
+
+    mov rsi, tie
+    mov rdx, tieSize
+    call print
+    .exit:
+    call exit
