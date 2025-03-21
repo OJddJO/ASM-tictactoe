@@ -5,8 +5,8 @@ section .bss
     inputBufferSize equ $ - inputBuffer
 
 section .data
-    br equ 0xa ; do not use this to print a br use singleBr instead
-    singleBr db 0xa, 0
+    extern br ; (from io.asm)
+    extern singleBr ; (from io.asm)
     verticalBar db '|', 0
     empty db ' ', 0
     x db 'X', 0
@@ -35,14 +35,22 @@ section .text
 
 _start:
     call initBoard
-    mov rsi, board
-    call printBoard
-    call promptUserTurn
-    mov rsi, inputBuffer
-    mov rdx, inputBufferSize
-    call print
+
+    .gameloop:
+        mov rsi, board
+        call printBoard ; print the board
+        call promptUserTurn ; ask the user to input a move
+        mov rsi, inputBuffer
+        mov rdx, inputBufferSize
+        call print
 
     call exit
+
+    .tie:
+        mov rsi, tie
+        mov rdx, tieSize
+        call print
+        call exit
 
 initBoard:
     ; initialize the baord
@@ -123,7 +131,7 @@ promptUserTurn:
         mov al, byte [rsi]
         cmp al, '1'
         jl .invalidInput
-        cmp al, '2'
+        cmp al, '3'
         jg .invalidInput
 
     ret

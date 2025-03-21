@@ -1,3 +1,9 @@
+section .data
+    br equ 0xa ; do not use this to print a br use singleBr instead
+    singleBr db 0xa, 0
+    global br
+    global singleBr
+
 section .text
     global print
     global input
@@ -16,12 +22,12 @@ input:
     ;   rsi: pointer to the buffer to store the input
     ;   rdx: length of the buffer
 
-    ; mov rdi, rsi
-    ; mov rcx, rdx ; counter for the clear buffer loop
-    ; .clearBuffer:
-    ;     mov byte [rdi], al
-    ;     inc rdi
-    ;     loop .clearBuffer
+    mov rdi, rsi
+    mov rcx, rdx ; counter for the clear buffer loop
+    .clearBuffer:
+        mov byte [rdi], al
+        inc rdi
+        loop .clearBuffer
 
     mov rax, 0
     mov rdi, 0
