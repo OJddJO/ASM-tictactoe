@@ -385,5 +385,4 @@ _start:
     mov rsi, tie
     mov rdx, tieSize
     call print
-    .exit:
     call exit
