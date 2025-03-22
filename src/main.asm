@@ -20,6 +20,9 @@ section .data
     winPromptSize equ $ - winPrompt
     tie db 'Its a tie!', 0
     tieSize equ $ - tie
+    boardHeader db '  1  2  3', br, 0
+    boardHeaderSize equ $ - boardHeader
+    letter db 'A', 0
 
     playerTurn db 'X', 0
     turn db 0
@@ -60,12 +63,25 @@ printVerticalBar:
 
 printBoard:
     ; Prints the board
+    mov rsi, boardHeader
+    mov rdx, boardHeaderSize
+    call print
+
     mov rsi, board
     mov rcx, 3
 
     .printLoop:
         push rcx
+
+        push rsi
+        mov rsi, letter
+        mov rdx, 1
+        call print
+        inc byte [rsi]
+        pop rsi
+
         call .printBoardRow
+
         push rsi
         mov rsi, singleBr
         mov rdx, 1
@@ -74,6 +90,8 @@ printBoard:
         pop rcx
         loop .printLoop
 
+    mov rsi, letter
+    mov byte [rsi] , 'A'
     ret
 
     .printBoardRow:
