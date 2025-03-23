@@ -87,11 +87,11 @@ printBoard:
         mov rdx, 1
         call print
         pop rsi
+
         pop rcx
         loop .printLoop
 
-    mov rsi, letter
-    mov byte [rsi] , 'A'
+    mov byte [letter] , 'A'
     ret
 
     .printBoardRow:
@@ -162,14 +162,12 @@ getCoord:
     ; Get the index on the board based on the input
     ; Returns:
     ;   rax: the index of the board
-    mov rsi, inputBuffer
-    mov rax, 0
-    mov al, byte [rsi]
+    movzx rax, byte [inputBuffer]
     sub al, 'A'
-    mov bl, byte [rsi + 1]
-    sub bl, '1'
     imul rax, 3
-    add al, bl
+    movzx rbx, byte [inputBuffer + 1]
+    sub bl, '1'
+    add rax, rbx
     ret
 
 placePlayer:
@@ -198,49 +196,42 @@ isValidMove:
 
 changeCurrentTurn:
     ; Change the player turn
-    mov rsi, playerTurn
-    mov al, 'X'
-    cmp al, [rsi]
+    mov al, [playerTurn]
+    cmp al, 'X'
     je .isCross
-        mov byte [rsi], al ; if the current player isn't cross
+        mov byte [playerTurn], 'X' ; if the current player isn't cross
         ret
 
     .isCross: ; if the current player is cross
-        mov al, 'O'
-        mov byte [rsi], al
+        mov byte [playerTurn], 'O'
         ret
 
 checkWinner:
     ; Check if there is a winner
     xor rax, rax
+    mov r9b, 'X'
 
-    mov r8b, 'X'
-    mov rdi, 0 ; check rows
-    call checkLines
-    cmp rax, 1
-    je printWin
-    mov rdi, 1 ; check cols
-    call checkLines
-    cmp rax, 1
-    je printWin
-    call checkDiags
-    cmp rax, 1
-    je printWin
+    .checkSymbol:
+        mov r8b, r9b
+        mov rdi, 0 ; check rows
+        call checkLines
+        cmp rax, 1
+        je printWin
+        mov rdi, 1 ; check cols
+        call checkLines
+        cmp rax, 1
+        je printWin
+        call checkDiags
+        cmp rax, 1
+        je printWin
 
-    mov r8b, 'O'
-    mov rdi, 0 ; check rows
-    call checkLines
-    cmp rax, 1
-    je printWin
-    mov rdi, 1 ; check cols
-    call checkLines
-    cmp rax, 1
-    je printWin
-    call checkDiags
-    cmp rax, 1
-    je printWin
+        cmp r9b, 'X'
+        je .checkO
+        ret
 
-    ret
+    .checkO:
+        mov r9b, 'O'
+        jmp .checkSymbol
 
 checkLines:
     ; Check if one of the lines is filled with a single symbol

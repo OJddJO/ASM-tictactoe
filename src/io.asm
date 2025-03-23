@@ -26,13 +26,6 @@ input:
     ; Args:
     ;   rsi: pointer to the buffer to store the input
     ;   rdx: length of the buffer
-    mov rdi, rsi
-    mov rcx, rdx ; counter for the clear buffer loop
-    .clearBuffer:
-        mov byte [rdi], al
-        inc rdi
-        loop .clearBuffer
-
     mov rax, 0
     mov rdi, 0
     syscall

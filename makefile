@@ -27,6 +27,7 @@ all: $(TARGET)
 # Link object files to create the executable
 $(TARGET): $(OBJ)
 	$(LD) $(LDFLAGS) -o bin/$@ $^
+	strip bin/$@
 
 # Compile assembly files to object files
 build/%.o: src/%.asm
