@@ -1,3 +1,12 @@
+; import exit.asm
+extern exit
+; import io.asm
+extern br
+extern singleBr
+extern print
+extern input
+extern clearTerm
+
 section .bss
     board resb 9
     boardSize equ $ - board
@@ -28,15 +37,6 @@ section .data
     turn db 0
 
 section .text
-    ; import exit.asm
-    extern exit
-    ; import io.asm
-    extern br
-    extern singleBr
-    extern print
-    extern input
-    extern clearTerm
-
     global _start
 
 initBoard:
@@ -111,7 +111,15 @@ promptUserTurn:
     ; Ask the user to enter coordinates
     ; Returns:
     ;   inputBuffer: the input of the user ex: a3
-    call .printPrompt
+    mov rsi, playerPrompt
+    mov rdx, playerPromptSize
+    call print
+    mov rsi, playerTurn
+    mov rdx, 1
+    call print
+    mov rsi, movePrompt
+    mov rdx, movePromptSize
+    call print
 
     mov rsi, inputBuffer
     mov rdx, inputBufferSize
@@ -133,18 +141,6 @@ promptUserTurn:
     jg .invalidInput
 
     ret
-
-    .printPrompt:
-        mov rsi, playerPrompt
-        mov rdx, playerPromptSize
-        call print
-        mov rsi, playerTurn
-        mov rdx, 1
-        call print
-        mov rsi, movePrompt
-        mov rdx, movePromptSize
-        call print
-        ret
 
     .invalidInput:
         ; user input is invalid -> redo
@@ -287,7 +283,6 @@ checkDiags:
     ;   r8b: the symbol to check
     ; Returns:
     ;   rax: 1 if one of the diagonal is filled, else 0
-
     mov sil, r8b
     mov rdi, 1
     call print
@@ -328,7 +323,7 @@ printWin:
     mov rsi, playerPrompt
     mov rdx, playerPromptSize
     call print
-    mov byte [rsi], r8b 
+    mov byte [rsi], r8b
     mov rdx, 1
     call print
     mov rsi, winPrompt
@@ -363,9 +358,8 @@ _start:
             call changeCurrentTurn
             call clearTerm
 
-            mov rax, turn
-            inc byte [rax]
-            cmp byte [rax], 9
+            inc byte [turn]
+            cmp byte [turn], 9
             jl .gameloop
 
     mov rsi, tie

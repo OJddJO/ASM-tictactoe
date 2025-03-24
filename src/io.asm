@@ -3,6 +3,7 @@ section .data
     singleBr db 0xa, 0
     global br
     global singleBr
+
     clearCode db 0x1b, '[2J', 0x1b, '[H', 0 ; "\033[2J\033[H"
     clearCodeSize equ $ - clearCode
 
