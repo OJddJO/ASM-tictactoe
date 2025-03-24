@@ -6,9 +6,11 @@ extern singleBr
 extern print
 extern _print
 extern input
+extern flushStdin
 extern clear
 
 section .bss
+    temp resb 64
     board resb 9
     boardSize equ $ - board
     inputBuffer resb 10
@@ -112,6 +114,7 @@ promptUserTurn:
 
     mov rsi, inputBuffer
     call input
+    call flushStdin
 
     ; evaluates the input from the user
     ; input must be like a1
@@ -205,7 +208,8 @@ checkWinner:
 
         cmp r9b, 'X'
         je .checkO
-        ret
+
+    ret
 
     .checkO:
         mov r9b, 'O'
@@ -252,10 +256,11 @@ checkLine:
     .checkLoop:
         cmp byte [rdx + rsi], r8b
         jne .notSame
-            inc rdx ; if it is the same char as the previous one
-            add rdx, rdi
-            add rdx, rdi
-            loop .checkLoop
+
+        inc rdx ; if it is the same char as the previous one
+        add rdx, rdi
+        add rdx, rdi
+        loop .checkLoop
 
     mov rax, 1 
     ret
@@ -280,9 +285,9 @@ checkDiags:
     .checkFirstDiagLoop:
         cmp byte [rdx + rsi], r8b
         jne .notFirstDiag
-            add rdx, 3
-            inc rsi
-            loop .checkFirstDiagLoop
+        add rdx, 3
+        inc rsi
+        loop .checkFirstDiagLoop
     mov rax, 1
     ret
 
@@ -293,9 +298,9 @@ checkDiags:
         .checkSecondDiagLoop:
             cmp byte [rdx + rsi], r8b
             jne .noWinner
-                add rdx, 3
-                dec rsi
-                loop .checkSecondDiagLoop
+            add rdx, 3
+            dec rsi
+            loop .checkSecondDiagLoop
         mov rax, 1
         ret
 
@@ -309,6 +314,7 @@ printWin:
     ;   r8b: the symbol of the winner
     mov rsi, playerPrompt
     call print
+    mov rsi, temp
     mov byte [rsi], r8b
     mov rdx, 1
     call _print
@@ -333,18 +339,18 @@ _start:
         call isValidMove
         cmp rax, 1
         je .validMove ; if it is valid continue
-            mov rsi, invalidMove ; else
-            call print
-            jmp .playerInput
+        mov rsi, invalidMove ; else
+        call print
+        jmp .playerInput
 
-        .validMove:
-            call placePlayer
-            call changeCurrentTurn
-            call clear
+    .validMove:
+        call placePlayer
+        call changeCurrentTurn
+        call clear
 
-            inc byte [turn]
-            cmp byte [turn], 9
-            jl .gameloop
+        inc byte [turn]
+        cmp byte [turn], 9
+        jl .gameloop
 
     mov rsi, tie
     call print

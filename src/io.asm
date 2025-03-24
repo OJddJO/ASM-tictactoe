@@ -1,3 +1,6 @@
+section .bss
+    temp resb 16
+
 section .data
     br equ 0xa ; do not use this to print a br use singleBr instead
     singleBr db 0xa, 0
@@ -11,6 +14,7 @@ section .text
     global print
     global _print
     global input
+    global flushStdin
     global clear
 
 print:
@@ -46,13 +50,37 @@ input:
     mov byte [rsi + rax], 0 ; Adding null-terminator
     ret
 
+flushStdin:
+    ; Flush the stdin
+    push rsi
+    push rdi
+    push rdx
+    mov rax, 0
+    mov rsi, 0
+    lea rdi, [temp]
+    mov rdx, 16
+    .loop:
+        syscall
+        test rax, rax
+        jle .done
+        jmp .loop
+    
+    .done:
+        mov qword [rdi], 0
+        pop rdx
+        pop rdi
+        pop rsi
+        ret
+
 clear:
     ; Clear the terminal
     push rsi
     push rdx
+    push rdi
     mov rsi, clearCode
     mov rdx, clearCodeSize
-    call print
+    call _print
+    pop rdi
     pop rdx
     pop rsi
     ret
