@@ -43,13 +43,8 @@ initBoard:
     ; initialize the baord
     mov rdi, board ; rdi = int board[9]
     mov rcx, 9
-
-    .initBoardLoop:
-        mov al, [empty]
-        mov byte [rdi], al ; board[i] = '0'
-        inc rdi
-        loop .initBoardLoop
-
+    mov al, [empty]
+    rep stosb
     ret
 
 printVerticalBar:
