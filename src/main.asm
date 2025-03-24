@@ -6,7 +6,7 @@ extern singleBr
 extern print
 extern _print
 extern input
-extern flushStdin
+extern fflush
 extern clear
 
 section .bss
@@ -107,14 +107,16 @@ promptUserTurn:
     mov rsi, playerPrompt
     call print
     mov rsi, playerTurn
-    mov rdx, 1
     call print
     mov rsi, movePrompt
     call print
 
     mov rsi, inputBuffer
     call input
-    call flushStdin
+    push rsi
+    mov rsi, 0
+    call fflush
+    pop rsi
 
     ; evaluates the input from the user
     ; input must be like a1

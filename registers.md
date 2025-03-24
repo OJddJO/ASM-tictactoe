@@ -6,10 +6,10 @@
 | **RBX**      | `rbx`      | `ebx`      | `bx`       | `bh`             | `bl`            | Base register (general-purpose).                                           |
 | **RCX**      | `rcx`      | `ecx`      | `cx`       | `ch`             | `cl`            | Counter register (used for loops and string operations).                   |
 | **RDX**      | `rdx`      | `edx`      | `dx`       | `dh`             | `dl`            | Data register (used for I/O and arithmetic).                               |
-| **RSI**      | `rsi`      | `esi`      | `si`       | -                | -               | Source index register (used for string and memory operations).             |
-| **RDI**      | `rdi`      | `edi`      | `di`       | -                | -               | Destination index register (used for string and memory operations).        |
-| **RBP**      | `rbp`      | `ebp`      | `bp`       | -                | -               | Base pointer register (used to reference function stack frames).           |
-| **RSP**      | `rsp`      | `esp`      | `sp`       | -                | -               | Stack pointer register (points to the top of the stack).                   |
+| **RSI**      | `rsi`      | `esi`      | `si`       | -                | `sil`           | Source index register (used for string and memory operations).             |
+| **RDI**      | `rdi`      | `edi`      | `di`       | -                | `dil`           | Destination index register (used for string and memory operations).        |
+| **RBP**      | `rbp`      | `ebp`      | `bp`       | -                | `bpl`           | Base pointer register (used to reference function stack frames).           |
+| **RSP**      | `rsp`      | `esp`      | `sp`       | -                | `spl`           | Stack pointer register (points to the top of the stack).                   |
 | **R8**       | `r8`       | `r8d`      | `r8w`      | -                | `r8b`           | General-purpose register (additional in x86-64).                           |
 | **R9**       | `r9`       | `r9d`      | `r9w`      | -                | `r9b`           | General-purpose register (additional in x86-64).                           |
 | **R10**      | `r10`      | `r10d`     | `r10w`     | -                | `r10b`          | General-purpose register (additional in x86-64).                           |
