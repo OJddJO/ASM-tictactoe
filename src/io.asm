@@ -9,10 +9,22 @@ section .data
 
 section .text
     global print
+    global _print
     global input
-    global clearTerm
+    global clear
 
 print:
+    ; Print a string without specifying the length
+    ; Args:
+    ;   rsi: pointer to the string to print (must be null-terminated)
+    mov rdi, rsi
+    xor rax, rax
+    mov rcx, -1
+    repne scasb ; scan until the byte is equal to rax (rax=0)
+    sub rdi, rsi
+    mov rdx, rdi
+
+_print:
     ; Print a string
     ; Args:
     ;   rsi: pointer to the string to print
@@ -34,7 +46,7 @@ input:
     mov byte [rsi + rax], 0 ; Adding null-terminator
     ret
 
-clearTerm:
+clear:
     ; Clear the terminal
     push rsi
     push rdx

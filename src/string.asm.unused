@@ -1,0 +1,19 @@
+section .text
+    global strcmp
+
+strcmp:
+    ; Args:
+    ;   rsi: pointer to the first string
+    ;   rdi: pointer to the second string
+    ; Returns:
+    ;   rax: the difference between the different characters
+    mov rcx, -1
+    repne cmpsb ; compares strings byte by byte
+    jne .notEqual
+    xor rax, rax ; set rax to 0
+    ret
+
+    .notEqual:
+        movzx rax, byte [rsi]
+        sub al, byte [rdi]
+        ret

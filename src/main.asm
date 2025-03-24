@@ -4,8 +4,9 @@ extern exit
 extern br
 extern singleBr
 extern print
+extern _print
 extern input
-extern clearTerm
+extern clear
 
 section .bss
     board resb 9
@@ -20,17 +21,11 @@ section .data
     o db 'O', 0
 
     playerPrompt db 'Player ', 0
-    playerPromptSize equ $ - playerPrompt
     movePrompt db ', enter your move (ex: A1): ', 0
-    movePromptSize equ $ - movePrompt
     invalidMove db 'Invalid move!', br, 0
-    invalidMoveSize equ $ - invalidMove
     winPrompt db ' wins!', br, 0
-    winPromptSize equ $ - winPrompt
     tie db 'Its a tie!', 0
-    tieSize equ $ - tie
     boardHeader db '  1  2  3', br, 0
-    boardHeaderSize equ $ - boardHeader
     letter db 'A', 0
 
     playerTurn db 'X', 0
@@ -51,7 +46,6 @@ printVerticalBar:
     ; Prints a vertical bar
     push rsi
     mov rsi, verticalBar
-    mov rdx, 1
     call print
     pop rsi
     ret
@@ -59,7 +53,6 @@ printVerticalBar:
 printBoard:
     ; Prints the board
     mov rsi, boardHeader
-    mov rdx, boardHeaderSize
     call print
 
     mov rsi, board
@@ -70,7 +63,6 @@ printBoard:
 
         push rsi
         mov rsi, letter
-        mov rdx, 1
         call print
         inc byte [rsi]
         pop rsi
@@ -79,7 +71,6 @@ printBoard:
 
         push rsi
         mov rsi, singleBr
-        mov rdx, 1
         call print
         pop rsi
 
@@ -99,7 +90,7 @@ printBoard:
             push rcx
             call printVerticalBar
             mov rdx, 1
-            call print
+            call _print
             call printVerticalBar
             inc rsi
             pop rcx
@@ -112,17 +103,14 @@ promptUserTurn:
     ; Returns:
     ;   inputBuffer: the input of the user ex: a3
     mov rsi, playerPrompt
-    mov rdx, playerPromptSize
     call print
     mov rsi, playerTurn
     mov rdx, 1
     call print
     mov rsi, movePrompt
-    mov rdx, movePromptSize
     call print
 
     mov rsi, inputBuffer
-    mov rdx, inputBufferSize
     call input
 
     ; evaluates the input from the user
@@ -145,7 +133,6 @@ promptUserTurn:
     .invalidInput:
         ; user input is invalid -> redo
         mov rsi, invalidMove
-        mov rdx, invalidMoveSize
         call print
         jmp promptUserTurn
 
@@ -285,7 +272,7 @@ checkDiags:
     ;   rax: 1 if one of the diagonal is filled, else 0
     mov sil, r8b
     mov rdi, 1
-    call print
+    call _print
 
     mov rdx, board
     mov rcx, 3
@@ -321,13 +308,11 @@ printWin:
     ; Args:
     ;   r8b: the symbol of the winner
     mov rsi, playerPrompt
-    mov rdx, playerPromptSize
     call print
     mov byte [rsi], r8b
     mov rdx, 1
-    call print
+    call _print
     mov rsi, winPrompt
-    mov rdx, winPromptSize
     call print
     call exit
 
@@ -335,7 +320,7 @@ _start:
     ; Entry Point
     call initBoard
 
-    call clearTerm ; clear the terminal
+    call clear ; clear the terminal
     .gameloop:
         call printBoard ; print the board
         call checkWinner
@@ -349,20 +334,18 @@ _start:
         cmp rax, 1
         je .validMove ; if it is valid continue
             mov rsi, invalidMove ; else
-            mov rdx, invalidMoveSize
             call print
             jmp .playerInput
 
         .validMove:
             call placePlayer
             call changeCurrentTurn
-            call clearTerm
+            call clear
 
             inc byte [turn]
             cmp byte [turn], 9
             jl .gameloop
 
     mov rsi, tie
-    mov rdx, tieSize
     call print
     call exit
