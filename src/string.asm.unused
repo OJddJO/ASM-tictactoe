@@ -6,14 +6,20 @@ strcmp:
     ;   rsi: pointer to the first string
     ;   rdi: pointer to the second string
     ; Returns:
-    ;   rax: the difference between the different characters
-    mov rcx, -1
-    repne cmpsb ; compares strings byte by byte
-    jne .notEqual
-    xor rax, rax ; set rax to 0
-    ret
+    ;   rax: 0 if the strings are equal, non-zero otherwise
+    .loop:
+        mov dl, byte [rsi + rcx]
+        cmp dl, byte [rdi + rcx]
+        jne .returns
 
-    .notEqual:
-        movzx rax, byte [rsi]
-        sub al, byte [rdi]
-        ret
+        cmp dl, 0
+        je .returns
+
+        add rcx, 1
+        jmp .loop
+
+    .returns:
+        movzx rax, byte [rdi + rcx]
+        sub al, byte [rsi + rcx]
+
+    ret
