@@ -16,7 +16,6 @@ section .text
     global print
     global _print
     global input
-    global fflush
     global clear
 
 print:
@@ -61,11 +60,14 @@ input:
     mov rdi, 0
     syscall
 
-    cmp byte [rsi + rax - 1], 0xa
+    push rsi
+    lea rsi, [rsi + rax - 1]
+    cmp byte [rsi], 0xa
+    je .done
+    cmp byte [rsi], 0
     je .done
 
     push rax
-
     mov rdx, 1
     mov rsi, temp
     .flush:
@@ -79,7 +81,8 @@ input:
 
     .endFlush pop rax
     .done:
-        mov byte [rsi + rax - 1], 0 ; Adding null-terminator
+        mov byte [rsi], 0 ; Adding null-terminator
+        pop rsi
         ret
 
 clear:
