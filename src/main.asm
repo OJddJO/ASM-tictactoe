@@ -113,10 +113,6 @@ promptUserTurn:
 
     mov rsi, inputBuffer
     call input
-    push rsi
-    mov rsi, 0
-    call fflush
-    pop rsi
 
     ; evaluates the input from the user
     ; input must be like a1

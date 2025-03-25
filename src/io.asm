@@ -1,5 +1,5 @@
 section .bss
-    temp resb 16
+    temp resb 1
 
 section .data
     br equ 0xa
@@ -54,31 +54,33 @@ input:
     ; Wait for a user input
     ; Args:
     ;   rsi: pointer to the buffer to store the input
+    ;   rdx: length of the buffer
     ; Used Registers:
     ;   rax, rsi, rdi
     mov rax, 0
     mov rdi, 0
     syscall
 
-    mov byte [rsi + rax], 0 ; Adding null-terminator
-    ret
+    cmp byte [rsi + rax - 1], 0xa
+    je .done
 
-fflush:
-    ; Flush the a file descriptor
-    ; Args:
-    ;   rsi: the file descriptor to flush
-    ; Used Registers:
-    ;   rax, rdx, rsi, rdi
-    mov rax, 0
-    lea rdi, [temp]
-    mov rdx, 16
-    .loop:
+    push rax
+
+    mov rdx, 1
+    mov rsi, temp
+    .flush:
+        xor rax, rax
         syscall
-        test rax, rax
-        jle .done
-        jmp .loop
-    
-    .done ret
+        cmp byte [temp], 0xa
+        je .endFlush
+        cmp byte [temp], 0
+        je .endFlush
+        jmp .flush
+
+    .endFlush pop rax
+    .done:
+        mov byte [rsi + rax - 1], 0 ; Adding null-terminator
+        ret
 
 clear:
     ; Clear the terminal
